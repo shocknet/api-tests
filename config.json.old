@@ -1,0 +1,26 @@
+{
+    "image":"shock-test:1",
+    "network":"2_default",
+    "testServerPort":"8085",
+    "newUserEndpoint":"http://192.168.0.24:3000/create",
+    "nodes":[
+        {
+            "host":"http://localhost",
+            "aliasBase":"alice",
+            "name":"alice-container",
+            "port":"11105",
+            "addr":"polar-n2-alice:10009",
+            "tls":"C:\\Users\\boufn\\.polar\\networks\\2\\volumes\\lnd\\alice\\tls.cert",
+            "macaroon":"C:\\Users\\boufn\\.polar\\networks\\2\\volumes\\lnd\\alice\\data\\chain\\bitcoin\\regtest\\admin.macaroon"
+        },
+        {
+            "host":"http://localhost",
+            "aliasBase":"bob",
+            "name":"bob-container",
+            "port":"11106",
+            "addr":"polar-n2-bob:10009",
+            "tls":"C:\\Users\\boufn\\.polar\\networks\\2\\volumes\\lnd\\bob\\tls.cert",
+            "macaroon":"C:\\Users\\boufn\\.polar\\networks\\2\\volumes\\lnd\\bob\\data\\chain\\bitcoin\\regtest\\admin.macaroon"
+        }
+    ]
+}

@@ -1,0 +1,62 @@
+const program = require("commander");
+const SocketIO = require("socket.io-client")
+const { Constants } = require('shock-common')
+const fetch = require("node-fetch");
+const { Action, Event } = Constants
+
+program.version("1.0.0")
+    .option("-h, --helperHost [alias]","helper host address")
+    .option("-a, --user-alias [alias]","user alias")
+    .option("-p, --pass [pass]","user pass")
+    .option("-i, --api-host [host]","api host address")
+    .option("-d, --device-id [deviceid]","device id for socket io connection")
+    .option("-t, --token [token]","token socket io connection")
+    .option("-s, --sender","whether sender or receiver in a two sided non repeatable action")
+    .option("-e, --extra-data [data]","the data")
+    .parse(process.argv);
+//console.log(program)
+if(!program.helperHost ||!program.userAlias || !program.pass || !program.apiHost || !program.deviceId || !program.token){
+    console.log("missing param: please provide all params ,-h, -a, -p, -i, -d, -t")
+}
+console.log(program.extraData)
+const socket = SocketIO(`${program.apiHost}`,{
+    autoConnect:true,
+    reconnectionAttempts:Infinity,
+    query:{
+        'x-shockwallet-device-id':program.deviceId
+    }
+})
+socket.connect()
+socket.on(Event.ON_DISPLAY_NAME,res => {
+    console.log(`got event from ${Event.ON_DISPLAY_NAME}`)
+    console.log(res)
+})
+socket.on("connect",()=>{
+    runTest()
+    .then(res => console.log(res))
+    .catch(e => console.log(e))
+})
+socket.on('connect_error', error => {
+    console.log(`connect_error: ${error}`)
+  })
+
+  socket.on('connect_timeout', timeout => {
+    console.log(`connect_timeout: ${timeout}`)
+  })
+const runTest =  async () => {
+    /*const plain = {
+        token:program.token
+    }
+    const data = {
+        alias:program.userAlias,
+        decryptedData:JSON.stringify(plain)
+    }
+    const res = await fetch(`${program.helperHost}/encrypt`,{
+        method:'POST',
+        body:JSON.stringify(data)
+    })
+    const encrypted = await res.json()*/
+    const toSend = JSON.parse(program.extraData)
+    socket.emit(Event.ON_DISPLAY_NAME,toSend)
+    //return encrypted
+}
