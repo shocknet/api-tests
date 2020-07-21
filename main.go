@@ -21,10 +21,12 @@ func main() {
 		return
 	}
 	//parse flags
-	var force, delete, test, gunauth bool
+	var force, delete, test, gunauth, single, extra bool
 	flag.BoolVar(&delete, "d", false, "delete all containers")
 	flag.BoolVar(&force, "f", false, "force the creation of the container, will run the delete first")
 	flag.BoolVar(&test, "t", false, "also run all tests")
+	flag.BoolVar(&single, "s", false, "only perform single tests")
+	flag.BoolVar(&extra, "x", false, "debug")
 	//flag.BoolVar(&gunauth, "g", false, "run gun auth CAUTION it leaves the node process running after exit")
 	flag.Parse()
 	//goutils.Dump(settings)
@@ -90,6 +92,7 @@ func main() {
 		generateHSNode:       "GENERATE_NEW_HANDSHAKE_NODE",
 		sendHandshake:        "SEND_HANDSHAKE_REQUEST",
 		getHandshakeAddress:  "/api/gun/ON_HANDSHAKE_ADDRESS",
+		acceptHSRequest:      "ACCEPT_REQUEST",
 	}
 	TestInfos := make([]TestInfo, len(settings.Nodes))
 
@@ -140,10 +143,13 @@ func main() {
 		if !ok {
 			return
 		}
-		//TODO GENERATE_NEW_HANDSHAKE_NODE
 		//TODO generate order address -> unimplemented socket
 		//TODO SET_BIO
 
+	}
+	if single {
+		goutils.Log("All single test were successful no more actions")
+		return
 	}
 	if len(settings.Nodes) == 1 {
 		goutils.PrintError(errors.New("single tests complete, please provide at least two node to make the other tests"))
@@ -180,6 +186,10 @@ func main() {
 				time.Sleep(5 * time.Second)
 			}
 			//TODO accept request
+			ok := AcceptHandshake(r, settings, TestInfos, routes, i, v)
+			if !ok {
+				return
+			}
 		}
 	}
 	goutils.Log("All test were successful no more actions")

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -49,8 +50,8 @@ func generateDeviceID(r *rand.Rand) (string, error) {
 
 func GenerateAuthPair(base string, r *rand.Rand) (NewUserReq, error) {
 	req := NewUserReq{}
-	alias := make([]byte, 5)
-	pass := make([]byte, 5)
+	alias := make([]byte, 3)
+	pass := make([]byte, 3)
 	_, err := r.Read(alias)
 	if err != nil {
 		return req, err
@@ -103,4 +104,33 @@ func copyOutput(r io.Reader) {
 	for scanner.Scan() {
 		fmt.Println(scanner.Text())
 	}
+}
+func checkResError(data []byte) {
+	resErr := ErrorsWrapper{}
+	err := goutils.JsonBytesToType(data, &resErr)
+	if err != nil {
+		goutils.PrintError(err)
+		return
+	}
+	if resErr.ErrorMessage != "" {
+		goutils.PrintError(errors.New(resErr.ErrorMessage))
+		return
+	}
+	if resErr.Err != "" {
+		goutils.PrintError(errors.New(resErr.Err))
+		return
+	}
+	goutils.Log(string(data))
+}
+
+func encryptTypeToString(info TestInfo, data interface{}) (string, error) {
+	dataBytes, err := goutils.ToJsonBytes(data)
+	if err != nil {
+		return "", err
+	}
+	encBytes, err := info.Encrypt(dataBytes)
+	if err != nil {
+		return "", err
+	}
+	return goutils.ToJsonString(encBytes)
 }

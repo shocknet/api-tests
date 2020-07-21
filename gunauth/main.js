@@ -6,7 +6,8 @@ var bodyParser = require('body-parser')
 const gun = new Gun({
     axe:false,
       //peers: ["http://localhost:8765/gun"]
-    peers: ["http://gun.shock.network:8765/gun"]
+    //peers: ["http://gun.shock.network:8765/gun"]
+    peers: ["http://guntest.shock.network:8765/gun"]
       //peers: ["http://167.88.11.206:8765/gun"]
       //peers: ["http://guntest.herokuapp.com/gun"]
     })

@@ -137,19 +137,20 @@ func APIAuth(r *rand.Rand, settings Settings, TestInfos []TestInfo, routes APIRo
 		goutils.PrintError(err)
 		return false
 	}
-	bodyBytes, err = TestInfos[i].Decrypt(bodyBytes)
+	resAuth := AuthRes{}
+	plain, err := TestInfos[i].Decrypt(bodyBytes)
 	if err != nil {
 		goutils.PrintError(err)
 		return false
 	}
-	resAuth := AuthRes{}
-	err = goutils.JsonBytesToType(bodyBytes, &resAuth)
+	err = goutils.JsonBytesToType(plain, &resAuth)
 	if err != nil {
 		goutils.PrintError(err)
 		return false
 	}
 	if resAuth.User.APIPubKey == "" || resAuth.Token == "" {
 		goutils.PrintError(errors.New("error in auth empty token or API pub"))
+		checkResError(plain)
 		return false
 	}
 	goutils.Log("Successfully auth user " + TestInfos[i].Alias + " with pass " + TestInfos[i].Pass)
@@ -176,13 +177,21 @@ func GetDisplayName(r *rand.Rand, settings Settings, TestInfos []TestInfo, route
 
 	bodyBytes, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
-	plain, err := TestInfos[i].Decrypt(bodyBytes)
 	if err != nil {
 		goutils.PrintError(err)
 		return false
 	}
 	dataRes := DataRes{}
-	goutils.JsonBytesToType(plain, &dataRes)
+	plain, err := TestInfos[i].Decrypt(bodyBytes)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	err = goutils.JsonBytesToType(plain, &dataRes)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
 	if dataRes.Data == "" {
 		return false
 	}
@@ -195,17 +204,7 @@ func SetDisplayName(r *rand.Rand, settings Settings, TestInfos []TestInfo, route
 		Token:       TestInfos[i].Token,
 		DisplayName: TestInfos[i].Alias,
 	}
-	dataBytes, err := goutils.ToJsonBytes(data)
-	if err != nil {
-		goutils.PrintError(err)
-		return false
-	}
-	encBytes, err := TestInfos[i].Encrypt(dataBytes)
-	if err != nil {
-		goutils.PrintError(err)
-		return false
-	}
-	dataS, err := goutils.ToJsonString(encBytes)
+	dataS, err := encryptTypeToString(TestInfos[i], data)
 	if err != nil {
 		goutils.PrintError(err)
 		return false
@@ -330,6 +329,22 @@ func GetHandshakeRequests(r *rand.Rand, settings Settings, TestInfos []TestInfo,
 		goutils.Log(string(plain))
 		return false
 	}
+	reqInterface, ok := dataRes.Data[0].(map[string]interface{})
+	if !ok {
+		goutils.PrintError(errors.New("Data is not in the right format"))
+		goutils.Dump(dataRes.Data)
+		goutils.Dump(reqInterface)
+		return false
+	}
+	reqID, ok := reqInterface["id"].(string)
+	if !ok {
+		goutils.PrintError(errors.New("Data is not in the right format"))
+		goutils.Dump(dataRes.Data)
+		goutils.Dump(reqID)
+		return false
+	}
+
+	TestInfos[i].HandshakeReqID = reqID
 	goutils.Log("Successfully got " + strconv.Itoa(len(dataRes.Data)) + " handshake requests")
 	goutils.Dump(dataRes.Data)
 	return true
@@ -342,17 +357,7 @@ func SendHandshake(r *rand.Rand, settings Settings, TestInfos []TestInfo, routes
 		RecipientPubKey: to,
 		UuId:            uuid,
 	}
-	dataBytes, err := goutils.ToJsonBytes(data)
-	if err != nil {
-		goutils.PrintError(err)
-		return false
-	}
-	encBytes, err := TestInfos[i].Encrypt(dataBytes)
-	if err != nil {
-		goutils.PrintError(err)
-		return false
-	}
-	dataS, err := goutils.ToJsonString(encBytes)
+	dataS, err := encryptTypeToString(TestInfos[i], data)
 	if err != nil {
 		goutils.PrintError(err)
 		return false
@@ -374,7 +379,39 @@ func SendHandshake(r *rand.Rand, settings Settings, TestInfos []TestInfo, routes
 		goutils.Log(string(decData))
 		return false
 	}
+	goutils.Log(string(decData))
 	goutils.Log("Successfully sent request to " + to)
+	return true
+}
+
+func AcceptHandshake(r *rand.Rand, settings Settings, TestInfos []TestInfo, routes APIRoutes, i int, v Node) bool {
+	data := ActionAcceptRequest{
+		Token:     TestInfos[i].Token,
+		RequestID: TestInfos[i].HandshakeReqID,
+	}
+	dataS, err := encryptTypeToString(TestInfos[i], data)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	dataRes, err := RunSocketIO(settings.TestServerPort, "js/emitEvent", TestInfos[i], false, dataS, routes.acceptHSRequest)
+
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	decData, err := TestInfos[i].Decrypt(dataRes)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	okRes := OkRes{}
+	goutils.JsonBytesToType(decData, &okRes)
+	if !okRes.Ok {
+		goutils.Log(string(decData))
+		return false
+	}
+	goutils.Log("Successfully accepted request with ID:" + TestInfos[i].HandshakeReqID)
 	return true
 }
 

@@ -350,9 +350,9 @@ fresh@0.5.2:
   resolved "https://registry.yarnpkg.com/fresh/-/fresh-0.5.2.tgz#3d8cadd90d976569fa835ab1f8e4b23a105605a7"
   integrity sha1-PYyt2Q2XZWn6g1qx+OSyOhBWBac=
 
-"gun@git://github.com/mimiza/gun.git#823df19593a3b49732716ab0395e1a0aba116f7a":
+"gun@git://github.com/amark/gun#3e678b8568a4a8a825b84b26759d4dd4f3b0988e":
   version "0.2020.520"
-  resolved "git://github.com/mimiza/gun.git#823df19593a3b49732716ab0395e1a0aba116f7a"
+  resolved "git://github.com/amark/gun#3e678b8568a4a8a825b84b26759d4dd4f3b0988e"
   dependencies:
     ws "^7.2.1"
   optionalDependencies:

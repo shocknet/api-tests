@@ -37,6 +37,7 @@ type TestInfo struct {
 	APIPubKey        string
 	GunPubKey        string
 	HandshakeAddress string
+	HandshakeReqID   string
 }
 
 type APIRoutes struct {
@@ -48,6 +49,11 @@ type APIRoutes struct {
 	generateHSNode       string
 	sendHandshake        string
 	getHandshakeAddress  string
+	acceptHSRequest      string
+}
+type ErrorsWrapper struct {
+	Err          string `json:"err"`
+	ErrorMessage string `json:"errorMessage"`
 }
 
 type NewUserReq struct {
@@ -106,6 +112,13 @@ type DataArrRes struct {
 type TokenRes struct {
 	Token string `json:"token"`
 }
+
+type HandshakeRequestsRes struct {
+	ID                   string  `json:"id"`
+	RequestorDisplayName string  `json:"requestorDisplayName"`
+	RequestorPK          string  `json:"requestorPK"`
+	Timestamp            float64 `json:"timestamp"`
+}
 type ActionSetDisplayName struct {
 	Token       string `json:"token"`
 	DisplayName string `json:"displayName"`
@@ -115,4 +128,9 @@ type ActionSendHandshake struct {
 	Token           string `json:"token"`
 	RecipientPubKey string `json:"recipientPublicKey"`
 	UuId            string `json:"uuid"`
+}
+
+type ActionAcceptRequest struct {
+	Token     string `json:"token"`
+	RequestID string `json:"requestID"`
 }

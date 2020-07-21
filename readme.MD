@@ -25,7 +25,7 @@ Example in `config.json`
 
 ¹ `name` can be used to get the api logs via `docker logs <name>`
 ² `addr` the address can be build with `<lnd-container-name>:<internal-port>`, assuming lnd was started correctly with the right flags (`--tlsextradomain=<lnd-container-name>`). Using the internal port (10009) since this is a connection from container to container. To find the container name when using Polar, run `docker ps` the container name will look like this `polar-n2-alice` and to make sure its possible to very its binding the same ports as the show in Polar
-³ `network` Polar with automatically create a network for the nodes, to find the name run `docker inspect --format={{.NetworkSettings.Networks}} <lnd-container-name>` the response will look like this `map[2_default:0xc00067e000]` in this case the network name is `2_default`
+³ `network` Polar will automatically create a network for the nodes, to find the name run `docker inspect --format={{.NetworkSettings.Networks}} <lnd-container-name>` the response will look like this `map[2_default:0xc00067e000]` in this case the network name is `2_default`
 
 ## Execution flags
 * `-d` delete all created containers and exit
@@ -57,7 +57,7 @@ More actions still need to be implemented
 
 ## Execution steps
 
-* Start and Configure Polar. basic setup: 1Bitcoind,2LND
+* Start and Configure Polar. basic setup: 1Bitcoind, 2LND
 * Build API image
 * Edit `config.json` with the right params
 * Start gun auth with `node gunauth/main` It will bind Port 3000 on the local machine

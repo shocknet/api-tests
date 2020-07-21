@@ -6,7 +6,7 @@
     "socket.io-client": "^2.3.0",
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
-    "gun": "git://github.com/mimiza/gun.git#823df19593a3b49732716ab0395e1a0aba116f7a",
+    "gun": "git://github.com/amark/gun#3e678b8568a4a8a825b84b26759d4dd4f3b0988e",
     "http": "^0.0.1-security"
   }
 }
