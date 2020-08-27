@@ -21,16 +21,46 @@ func main() {
 		return
 	}
 	//parse flags
-	var force, delete, test, gunauth, single, extra bool
+	var force, delete, test, gunauth, single, extra, gunk1, all bool
 	flag.BoolVar(&delete, "d", false, "delete all containers")
 	flag.BoolVar(&force, "f", false, "force the creation of the container, will run the delete first")
 	flag.BoolVar(&test, "t", false, "also run all tests")
 	flag.BoolVar(&single, "s", false, "only perform single tests")
 	flag.BoolVar(&extra, "x", false, "debug")
+	flag.BoolVar(&gunk1, "k", false, "start or delete gunk1 (only)")
+	flag.BoolVar(&all, "a", false, "works only with -d and -k to kill everything")
 	//flag.BoolVar(&gunauth, "g", false, "run gun auth CAUTION it leaves the node process running after exit")
 	flag.Parse()
 	//goutils.Dump(settings)
-
+	if gunk1 {
+		if delete {
+			_, err := execute("docker", "stop", settings.Gunk1.Name)
+			if err != nil {
+				goutils.PrintError(err)
+			}
+			_, err = execute("docker", "rm", settings.Gunk1.Name)
+			if err != nil {
+				goutils.PrintError(err)
+			}
+			if all {
+				removeContainers(settings.Nodes)
+			}
+			return
+		}
+		_, err = execute("docker", "create", "--name", settings.Gunk1.Name, "-p", settings.Gunk1.Port+":8080", settings.Gunk1.Image)
+		if err != nil {
+			goutils.PrintError(err)
+		}
+		_, err = execute("docker", "network", "connect", settings.Network, settings.Gunk1.Name)
+		if err != nil {
+			goutils.PrintError(err)
+		}
+		_, err = execute("docker", "start", settings.Gunk1.Name)
+		if err != nil {
+			goutils.PrintError(err)
+		}
+		return
+	}
 	if delete {
 		removeContainers(settings.Nodes)
 		return
@@ -90,6 +120,8 @@ func main() {
 		getHandshakeRequests: "/api/gun/ON_RECEIVED_REQUESTS",
 		setDisplayName:       "SET_DISPLAY_NAME",
 		generateHSNode:       "GENERATE_NEW_HANDSHAKE_NODE",
+		initFeedWall:         "INIT_FEED_WALL",
+		generateOrderAddress: "GENERATE_ORDER_ADDRESS",
 		sendHandshake:        "SEND_HANDSHAKE_REQUEST",
 		getHandshakeAddress:  "/api/gun/ON_HANDSHAKE_ADDRESS",
 		acceptHSRequest:      "ACCEPT_REQUEST",
@@ -136,6 +168,14 @@ func main() {
 			return
 		}
 		ok = GenerateHandshakeNode(r, settings, TestInfos, routes, i, v)
+		if !ok {
+			return
+		}
+		ok = GenerateOrderAddress(r, settings, TestInfos, routes, i, v)
+		if !ok {
+			return
+		}
+		ok = GenerateWall(r, settings, TestInfos, routes, i, v)
 		if !ok {
 			return
 		}

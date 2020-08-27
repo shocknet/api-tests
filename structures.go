@@ -10,6 +10,7 @@ type Settings struct {
 	Network         string `json:"network"`
 	NewUserEndpoint string `json:"newUserEndpoint"`
 	TestServerPort  string `json:"testServerPort"`
+	Gunk1           GunK1  `json:"gunk1"`
 }
 type Node struct {
 	Name      string `json:"name"`
@@ -19,6 +20,11 @@ type Node struct {
 	Macaroon  string `json:"macaroon"`
 	AliasBase string `json:"aliasBase"`
 	Host      string `json:"host"`
+}
+type GunK1 struct {
+	Image string `json:"image"`
+	Port  string `json:"port"`
+	Name  string `json:"name"`
 }
 
 type EncryptedData struct {
@@ -47,6 +53,8 @@ type APIRoutes struct {
 	getHandshakeRequests string
 	setDisplayName       string
 	generateHSNode       string
+	generateOrderAddress string
+	initFeedWall         string
 	sendHandshake        string
 	getHandshakeAddress  string
 	acceptHSRequest      string

@@ -267,6 +267,83 @@ func GenerateHandshakeNode(r *rand.Rand, settings Settings, TestInfos []TestInfo
 	goutils.Log("Successfully generated handshake node for " + TestInfos[i].Alias)
 	return true
 }
+func GenerateOrderAddress(r *rand.Rand, settings Settings, TestInfos []TestInfo, routes APIRoutes, i int, v Node) bool {
+	data := TokenRes{
+		Token: TestInfos[i].Token,
+	}
+	dataBytes, err := goutils.ToJsonBytes(data)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	encBytes, err := TestInfos[i].Encrypt(dataBytes)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	dataS, err := goutils.ToJsonString(encBytes)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	dataRes, err := RunSocketIO(settings.TestServerPort, "js/emitEvent", TestInfos[i], false, dataS, routes.generateOrderAddress)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	decData, err := TestInfos[i].Decrypt(dataRes)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	okRes := OkRes{}
+	goutils.JsonBytesToType(decData, &okRes)
+	if !okRes.Ok {
+		goutils.Log(string(decData))
+		return false
+	}
+	goutils.Log("Successfully generated order address for " + TestInfos[i].Alias)
+	return true
+}
+
+func GenerateWall(r *rand.Rand, settings Settings, TestInfos []TestInfo, routes APIRoutes, i int, v Node) bool {
+	data := TokenRes{
+		Token: TestInfos[i].Token,
+	}
+	dataBytes, err := goutils.ToJsonBytes(data)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	encBytes, err := TestInfos[i].Encrypt(dataBytes)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	dataS, err := goutils.ToJsonString(encBytes)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	dataRes, err := RunSocketIO(settings.TestServerPort, "js/emitEvent", TestInfos[i], false, dataS, routes.initFeedWall)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	decData, err := TestInfos[i].Decrypt(dataRes)
+	if err != nil {
+		goutils.PrintError(err)
+		return false
+	}
+	okRes := OkRes{}
+	goutils.JsonBytesToType(decData, &okRes)
+	if !okRes.Ok {
+		goutils.Log(string(decData))
+		return false
+	}
+	goutils.Log("Successfully generated feed wall for " + TestInfos[i].Alias)
+	return true
+}
 
 func GetHandshakeAddress(r *rand.Rand, settings Settings, TestInfos []TestInfo, routes APIRoutes, i int, v Node) bool {
 	client := &http.Client{

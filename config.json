@@ -21,5 +21,10 @@
             "tls":"C:\\Users\\boufn\\.polar\\networks\\2\\volumes\\lnd\\bob\\tls.cert",
             "macaroon":"C:\\Users\\boufn\\.polar\\networks\\2\\volumes\\lnd\\bob\\data\\chain\\bitcoin\\regtest\\admin.macaroon"
         }
-    ]
+    ],
+    "gunk1":{
+        "image":"gunk1:1",
+        "port":"11109",
+        "name":"gunk1-container"
+    }
 }

@@ -22,6 +22,10 @@ Example in `config.json`
 * * `addr` the address of the lnd node ²
 * * `tls` the absolute path to the tls certificate 
 * * `macaroon` the absolute path to the macaroon file
+* `gunk1` data about gunk1 instance
+* * `image` the docker image of gunk1
+* * `port` the port gunk1 should listen to
+* * `name` the name to give to gunk1 container
 
 ¹ `name` can be used to get the api logs via `docker logs <name>`
 ² `addr` the address can be build with `<lnd-container-name>:<internal-port>`, assuming lnd was started correctly with the right flags (`--tlsextradomain=<lnd-container-name>`). Using the internal port (10009) since this is a connection from container to container. To find the container name when using Polar, run `docker ps` the container name will look like this `polar-n2-alice` and to make sure its possible to very its binding the same ports as the show in Polar
@@ -31,6 +35,9 @@ Example in `config.json`
 * `-d` delete all created containers and exit
 * `-f` delete all containers before creating them
 * `-t` run tests
+* `-s` only perform single tests (no test between instances)
+* `-k` start or delete (with `-d`) gunk1 (only)
+* `-a` works only with `-d` and `-k` to kill everything
 
 ## Build the API image
 This test does not build the api image (not yet) the image needs to be built before and provided in the `config.json` file
@@ -49,9 +56,12 @@ To build the image move to the API directory and run `docker build -t <image-nam
 * Set display name -All API containers
 * Get display name -All API containers
 * Generate handshake node -All API containers
+* Generate order address -All API containers
+* Generate wall -All API containers
 * Get handshake node -All API containers
 * Send handshake request -Node #0
 * Get handshake requests -Node #1
+* Accept handshake request -Node #0
 
 More actions still need to be implemented
 
