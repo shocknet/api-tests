@@ -74,7 +74,6 @@ func execute(name string, args ...string) ([]byte, error) {
 	cmd.Stdout = cmdOutput
 	cmd.Stderr = cmdErr
 	err := cmd.Run()
-	//fmt.Println(string(cmdErr.Bytes()))
 	return cmdOutput.Bytes(), err
 }
 
@@ -123,6 +122,17 @@ func checkResError(data []byte) {
 	goutils.Log(string(data))
 }
 
+func encryptTypeToBytes(info TestInfo, data interface{}) ([]byte, error) {
+	dataBytes, err := goutils.ToJsonBytes(data)
+	if err != nil {
+		return nil, err
+	}
+	encBytes, err := info.Encrypt(dataBytes)
+	if err != nil {
+		return nil, err
+	}
+	return goutils.ToJsonBytes(encBytes)
+}
 func encryptTypeToString(info TestInfo, data interface{}) (string, error) {
 	dataBytes, err := goutils.ToJsonBytes(data)
 	if err != nil {

@@ -61,7 +61,7 @@ To build the image move to the API directory and run `docker build -t <image-nam
 * Get handshake node -All API containers
 * Send handshake request -Node #0
 * Get handshake requests -Node #1
-* Accept handshake request -Node #0
+* Accept handshake request -Node #1
 
 More actions still need to be implemented
 

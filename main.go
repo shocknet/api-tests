@@ -21,14 +21,15 @@ func main() {
 		return
 	}
 	//parse flags
-	var force, delete, test, gunauth, single, extra, gunk1, all bool
+	var force, delete, test, gunauth, single, extra, gunk1, superpeer, all bool
 	flag.BoolVar(&delete, "d", false, "delete all containers")
 	flag.BoolVar(&force, "f", false, "force the creation of the container, will run the delete first")
 	flag.BoolVar(&test, "t", false, "also run all tests")
 	flag.BoolVar(&single, "s", false, "only perform single tests")
 	flag.BoolVar(&extra, "x", false, "debug")
-	flag.BoolVar(&gunk1, "k", false, "start or delete gunk1 (only)")
-	flag.BoolVar(&all, "a", false, "works only with -d and -k to kill everything")
+	flag.BoolVar(&gunk1, "g", false, "start or delete gunk1 (only)")
+	flag.BoolVar(&superpeer, "k", false, "kill superpeer when deleting or force starting")
+	flag.BoolVar(&all, "a", false, "works only with -d and -g to kill everything")
 	//flag.BoolVar(&gunauth, "g", false, "run gun auth CAUTION it leaves the node process running after exit")
 	flag.Parse()
 	//goutils.Dump(settings)
@@ -43,30 +44,19 @@ func main() {
 				goutils.PrintError(err)
 			}
 			if all {
-				removeContainers(settings.Nodes)
+				removeContainers(settings.Nodes, superpeer, settings.Superpeer)
 			}
 			return
 		}
-		_, err = execute("docker", "create", "--name", settings.Gunk1.Name, "-p", settings.Gunk1.Port+":8080", settings.Gunk1.Image)
-		if err != nil {
-			goutils.PrintError(err)
-		}
-		_, err = execute("docker", "network", "connect", settings.Network, settings.Gunk1.Name)
-		if err != nil {
-			goutils.PrintError(err)
-		}
-		_, err = execute("docker", "start", settings.Gunk1.Name)
-		if err != nil {
-			goutils.PrintError(err)
-		}
+		createConnectStart(settings.Gunk1.Name, settings.Gunk1.Port+":8080", settings.Gunk1.Image, settings.Network)
 		return
 	}
 	if delete {
-		removeContainers(settings.Nodes)
+		removeContainers(settings.Nodes, superpeer, settings.Superpeer)
 		return
 	}
 	if force {
-		removeContainers(settings.Nodes)
+		removeContainers(settings.Nodes, superpeer, settings.Superpeer)
 	}
 
 	//check image exists
@@ -78,6 +68,28 @@ func main() {
 	if len(settings.Nodes) == 0 {
 		goutils.PrintError(errors.New("please provide at least one node to make the tests"))
 		return
+	}
+
+	if settings.Superpeer.Image == "" {
+		goutils.Warn("No image provided for super peer, no superpeer will be runned")
+	} else {
+		res := []byte("")
+		res, err = execute("docker", "inspect", "--format={{.Name}}", settings.Superpeer.Name)
+		if err != nil {
+			goutils.Log("looks like " + settings.Superpeer.Name + " container does not exist, will create it now")
+			createConnect(settings.Superpeer.Name, settings.Superpeer.Port+":8765", settings.Superpeer.Image, settings.Network)
+		}
+		res, err = execute("docker", "inspect", "--format={{.State.Running}}", settings.Superpeer.Name)
+		trimRes := strings.TrimSuffix(string(res), "\n")
+		if err != nil || string(trimRes) != "true" {
+			goutils.Log("looks like " + settings.Superpeer.Name + " container exists,but is not running will run it now")
+			_, err = execute("docker", "start", settings.Superpeer.Name)
+			if err != nil {
+				goutils.PrintError(err)
+			}
+		}
+		goutils.Log("looks like " + settings.Superpeer.Name + " container exists and is running, no more actions")
+
 	}
 	for _, v := range settings.Nodes {
 		res := []byte("")
@@ -113,6 +125,11 @@ func main() {
 		go executeAsync("node", "gunauth/main")
 		time.Sleep(1 * time.Second)
 	}
+	gunKeys := GunKeys{
+		setDisplayName:   "$user.Profile.displayName",     //put
+		setHandshakeNode: "$user.currentHandshakeAddress", //put
+		setOrderAddress:  "$user.currentOrderAddress",     //put
+	}
 	routes := APIRoutes{
 		exchangeKeys:         "/api/security/exchangeKeys",
 		auth:                 "/api/lnd/auth",
@@ -120,11 +137,13 @@ func main() {
 		getHandshakeRequests: "/api/gun/ON_RECEIVED_REQUESTS",
 		setDisplayName:       "SET_DISPLAY_NAME",
 		generateHSNode:       "GENERATE_NEW_HANDSHAKE_NODE",
-		initFeedWall:         "INIT_FEED_WALL",
+		initFeedWall:         "/api/gun/initwall",
 		generateOrderAddress: "GENERATE_ORDER_ADDRESS",
-		sendHandshake:        "SEND_HANDSHAKE_REQUEST",
+		sendHandshake:        "/api/gun/requests/",
 		getHandshakeAddress:  "/api/gun/ON_HANDSHAKE_ADDRESS",
-		acceptHSRequest:      "ACCEPT_REQUEST",
+		acceptHSRequest:      "/api/gun/requests/",
+		gunRpcPut:            "/api/gun/put",
+		gunKeys:              gunKeys,
 	}
 	TestInfos := make([]TestInfo, len(settings.Nodes))
 
@@ -261,6 +280,31 @@ func createContainer(image string, node Node) error {
 	return err
 }
 
+func createConnect(name, port, image, network string) {
+	_, err := execute("docker", "create", "--name", name, "-p", port, image)
+	if err != nil {
+		goutils.PrintError(err)
+	}
+	_, err = execute("docker", "network", "connect", network, name)
+	if err != nil {
+		goutils.PrintError(err)
+	}
+}
+func createConnectStart(name, port, image, network string) {
+	_, err := execute("docker", "create", "--name", name, "-p", port, image)
+	if err != nil {
+		goutils.PrintError(err)
+	}
+	_, err = execute("docker", "network", "connect", network, name)
+	if err != nil {
+		goutils.PrintError(err)
+	}
+	_, err = execute("docker", "start", name)
+	if err != nil {
+		goutils.PrintError(err)
+	}
+}
+
 func runContainer(network string, node Node) error {
 	//docker cp /home/bitcoin/.lnd/tls.cert shocknet_api:/usr/src/app/tls.cert
 	_, err := execute("docker", "cp", node.TLS, node.Name+":/usr/src/app/tls.cert")
@@ -284,7 +328,7 @@ func runContainer(network string, node Node) error {
 	return nil
 }
 
-func removeContainers(nodes []Node) {
+func removeContainers(nodes []Node, alsoSuper bool, superpeer Superpeer) {
 	for _, v := range nodes {
 		_, err := execute("docker", "stop", v.Name)
 		if err != nil {
@@ -295,4 +339,15 @@ func removeContainers(nodes []Node) {
 			goutils.PrintError(err)
 		}
 	}
+	if alsoSuper {
+		_, err := execute("docker", "stop", superpeer.Name)
+		if err != nil {
+			goutils.PrintError(err)
+		}
+		_, err = execute("docker", "rm", superpeer.Name)
+		if err != nil {
+			goutils.PrintError(err)
+		}
+	}
+
 }

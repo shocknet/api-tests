@@ -20,6 +20,7 @@ if(!program.helperHost ||!program.userAlias || !program.pass || !program.apiHost
 const socket = SocketIO(`${program.apiHost}`,{
     autoConnect:true,
     reconnectionAttempts:Infinity,
+    //timeout:5000,
     query:{
         'x-shockwallet-device-id':program.deviceId
     }

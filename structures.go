@@ -5,12 +5,13 @@ import (
 )
 
 type Settings struct {
-	Image           string `json:"image"`
-	Nodes           []Node `json:"nodes"`
-	Network         string `json:"network"`
-	NewUserEndpoint string `json:"newUserEndpoint"`
-	TestServerPort  string `json:"testServerPort"`
-	Gunk1           GunK1  `json:"gunk1"`
+	Image           string    `json:"image"`
+	Nodes           []Node    `json:"nodes"`
+	Network         string    `json:"network"`
+	NewUserEndpoint string    `json:"newUserEndpoint"`
+	TestServerPort  string    `json:"testServerPort"`
+	Gunk1           GunK1     `json:"gunk1"`
+	Superpeer       Superpeer `json:"superpeer"`
 }
 type Node struct {
 	Name      string `json:"name"`
@@ -22,6 +23,12 @@ type Node struct {
 	Host      string `json:"host"`
 }
 type GunK1 struct {
+	Image string `json:"image"`
+	Port  string `json:"port"`
+	Name  string `json:"name"`
+}
+
+type Superpeer struct {
 	Image string `json:"image"`
 	Port  string `json:"port"`
 	Name  string `json:"name"`
@@ -58,6 +65,14 @@ type APIRoutes struct {
 	sendHandshake        string
 	getHandshakeAddress  string
 	acceptHSRequest      string
+	gunRpcPut            string
+	gunKeys              GunKeys
+}
+
+type GunKeys struct {
+	setDisplayName   string
+	setHandshakeNode string
+	setOrderAddress  string
 }
 type ErrorsWrapper struct {
 	Err          string `json:"err"`
@@ -137,8 +152,16 @@ type ActionSendHandshake struct {
 	RecipientPubKey string `json:"recipientPublicKey"`
 	UuId            string `json:"uuid"`
 }
+type reqSendHandshake struct {
+	PublicKey string `json:"publicKey"`
+}
 
 type ActionAcceptRequest struct {
 	Token     string `json:"token"`
 	RequestID string `json:"requestID"`
+}
+
+type RPCAction struct {
+	Path  string `json:"path"`
+	Value string `json:"value"`
 }
